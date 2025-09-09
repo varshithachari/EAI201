@@ -1,0 +1,502 @@
+import tkinter as tk
+from tkinter import ttk
+from queue import PriorityQueue
+from collections import deque
+
+# 🔽 Paste your full dictionaries here:
+distances = {
+    "Admin Block": {
+        "Security Entrance": 80,
+        "Library": 16,
+        "Auditorium": 17,
+        "Academic Block": 126,
+        "Cafeteria": 35,
+        "Main Gate": 160,
+        "Exit Gate": 220,
+        "Medical": 80,
+        "Hostel": 506,
+        "Mini Mart": 434,
+        "Food Court": 355,
+        "Sports": 850
+    },
+    "Academic Block": {
+        "Security Entrance": 240,
+        "Library": 46,
+        "Auditorium": 150,
+        "Cafeteria": 27,
+        "Main Gate": 210,
+        "Exit Gate": 250,
+        "Medical": 85,
+        "Hostel": 380,
+        "Mini Mart": 410,
+        "Food Court": 192,
+        "Admin Block": 126,
+        "Sports": 561
+    },
+    "Library": {
+        "Security Entrance": 100,
+        "Auditorium": 3,
+        "Academic Block": 46,
+        "Cafeteria": 63,
+        "Main Gate": 275,
+        "Exit Gate": 240,
+        "Medical": 75,
+        "Hostel": 450,
+        "Mini Mart": 465,
+        "Food Court": 470,
+        "Admin Block": 16,
+        "Sports": 857
+    },
+    "Cafeteria": {
+        "Security Entrance": 130,
+        "Library": 63,
+        "Auditorium": 10,
+        "Academic Block": 27,
+        "Main Gate": 276,
+        "Exit Gate": 270,
+        "Medical": 90,
+        "Hostel": 520,
+        "Mini Mart": 585,
+        "Food Court": 355,
+        "Admin Block": 35,
+        "Sports": 920
+    },
+    "Auditorium": {
+        "Security Entrance": 120,
+        "Library": 3,
+        "Academic Block": 150,
+        "Cafeteria": 10,
+        "Main Gate": 286,
+        "Exit Gate": 260,
+        "Medical": 80,
+        "Hostel": 510,
+        "Mini Mart": 574,
+        "Food Court": 344,
+        "Admin Block": 17,
+        "Sports": 930
+    },
+    "Food Court": {
+        "Security Entrance": 471,
+        "Library": 470,
+        "Auditorium": 344,
+        "Academic Block": 192,
+        "Cafeteria": 355,
+        "Main Gate": 699,
+        "Exit Gate": 609,
+        "Medical": 405,
+        "Hostel": 816,
+        "Mini Mart": 836,
+        "Admin Block": 355,
+        "Sports": 427
+    },
+    "Security Entrance": {
+        "Admin Block": 80,
+        "Academic Block": 240,
+        "Library": 100,
+        "Cafeteria": 130,
+        "Auditorium": 120,
+        "Food Court": 471,
+        "Main Gate": 150,
+        "Exit Gate": 180,
+        "Medical": 90,
+        "Hostel": 500,
+        "Mini Mart": 520,
+        "Sports": 880
+    },
+    "Main Gate": {
+        "Admin Block": 160,
+        "Academic Block": 210,
+        "Library": 275,
+        "Cafeteria": 276,
+        "Auditorium": 286,
+        "Food Court": 699,
+        "Security Entrance": 150,
+        "Exit Gate": 100,
+        "Medical": 180,
+        "Hostel": 600,
+        "Mini Mart": 620,
+        "Sports": 900
+    },
+    "Exit Gate": {
+        "Admin Block": 220,
+        "Academic Block": 250,
+        "Library": 240,
+        "Cafeteria": 270,
+        "Auditorium": 260,
+        "Food Court": 609,
+        "Security Entrance": 180,
+        "Main Gate": 100,
+        "Medical": 160,
+        "Hostel": 580,
+        "Mini Mart": 600,
+        "Sports": 870
+    },
+    "Medical": {
+        "Admin Block": 80,
+        "Academic Block": 85,
+        "Library": 75,
+        "Cafeteria": 90,
+        "Auditorium": 80,
+        "Food Court": 405,
+        "Security Entrance": 90,
+        "Main Gate": 180,
+        "Exit Gate": 160,
+        "Hostel": 490,
+        "Mini Mart": 510,
+        "Sports": 840
+    },
+    "Hostel": {
+        "Admin Block": 506,
+        "Academic Block": 380,
+        "Library": 450,
+        "Cafeteria": 520,
+        "Auditorium": 510,
+        "Food Court": 816,
+        "Security Entrance": 500,
+        "Main Gate": 600,
+        "Exit Gate": 580,
+        "Medical": 490,
+        "Mini Mart": 200,
+        "Sports": 300
+    },
+    "Mini Mart": {
+        "Admin Block": 434,
+        "Academic Block": 410,
+        "Library": 465,
+        "Cafeteria": 585,
+        "Auditorium": 574,
+        "Food Court": 836,
+        "Security Entrance": 520,
+        "Main Gate": 620,
+        "Exit Gate": 600,
+        "Medical": 510,
+        "Hostel": 200,
+        "Sports": 320
+    },
+    "Sports": {
+        "Admin Block": 850,
+        "Academic Block": 561,
+        "Library": 857,
+        "Cafeteria": 920,
+        "Auditorium": 930,
+        "Food Court": 427,
+        "Security Entrance": 880,
+        "Main Gate": 900,
+        "Exit Gate": 870,
+        "Medical": 840,
+        "Hostel": 300,
+        "Mini Mart": 320
+    }
+} # Campus graph
+contacts = {
+    "Admin": {
+        "Admission": [{"name": "Thanushree", "phone": "08031233133"}, {"name": "Sri Vijay Kumar", "phone": "08031233103"}],
+        "Registrar": [{"name": "Sri Gautam", "phone": "08031233104"}, {"name": "Sri Dhanashri", "phone": "08031233101"}],
+        "Communication": {"name": "Sri Chandrashekar", "phone": "08031233107"},
+        "Finance": {"name": "Sri Sudheerda K.M", "phone": "08031233102"},
+        "IT Support": {"name": "Sri Sachin Goni", "phone": "08031233109"}
+    },
+    "Academic": {
+        "VC Office": [
+            {"name": "Shilparanganathra", "phone": "08031233122"},
+            {"name": "Ashwin Kumar", "phone": "Contact VC Office"},
+            {"name": "Subhant T. Joshi", "phone": "08031233104"},
+            {"name": "Dr. Padmavathi B.S", "phone": "Contact VC Office"},
+            {"name": "Dr. Vineeth Paleni", "phone": "Contact VC Office"}
+        ]
+    },
+    "Library": {"name": "Bharathkumar V", "phone": "8861775721"},
+    "Medical Center": {"name": "Dr. Anjana", "phone": "08031233103"},
+    "Sports & P.E": {"name": "Sri Hemanth", "phone": "9449141869"},
+    "Hostel": {
+        "Girls": {"name": "Jayshree", "phone": "9513228510"},
+        "Boys": {"name": "Ullas Kallur", "phone": "08031233100"}
+    }
+}
+  # Staff details
+contact_locations = {
+    "Admission": "Admin Block",
+    "Registrar": "Admin Block",
+    "Communication": "Admin Block",
+    "Finance": "Admin Block",
+    "IT Support": "Admin Block",
+    "VC Office": "Academic Block",
+    "Library": "Library",
+    "Medical Center": "Medical",
+    "Sports & P.E": "Sports",
+    "Girls": "Hostel",
+    "Boys": "Hostel"
+}  
+# Unit-to-building mapping
+location_timings = {
+    "Admin Block": {"start": "9:30", "end": "17:30"},
+    "Academic Block": {"start": "9:30", "end": "17:30"},
+    "Library": {"start": "9:30", "end": "17:30"},
+    "Cafeteria": {"start": "9:30", "end": "17:30"},
+    "Auditorium": {"start": "9:30", "end": "17:30"},
+    "Food Court": {
+        "breakfast": {"start": "7:30", "end": "10:30"},
+        "lunch": {"start": "12:30", "end": "14:30"},
+        "dinner": {"start": "19:30", "end": "22:30"}
+    },
+    "Main Gate": {"start": "7:00", "end": "20:00"},
+    "Security Entrance": {"start": "7:00", "end": "20:00"},
+    # Add timings for other locations
+}
+
+
+
+# ---------- Algorithms ----------
+def bfs(graph, start, goal):
+    visited = set()
+    queue = deque([[start]])
+    while queue:
+        path = queue.popleft()
+        node = path[-1]
+        if node == goal:
+            return path, len(path) - 1
+        if node not in visited:
+            visited.add(node)
+            for neighbor in graph.get(node, {}):
+                queue.append(path + [neighbor])
+    return None, None
+
+def dfs(graph, start, goal):
+    visited = set()
+    stack = [[start]]
+    while stack:
+        path = stack.pop()
+        node = path[-1]
+        if node == goal:
+            return path, len(path) - 1
+        if node not in visited:
+            visited.add(node)
+            for neighbor in graph.get(node, {}):
+                stack.append(path + [neighbor])
+    return None, None
+
+def ucs(graph, start, goal):
+    visited = set()
+    pq = PriorityQueue()
+    pq.put((0, [start]))
+    while not pq.empty():
+        cost, path = pq.get()
+        node = path[-1]
+        if node == goal:
+            return path, cost
+        if node not in visited:
+            visited.add(node)
+            for neighbor, weight in graph.get(node, {}).items():
+                if neighbor not in visited:
+                    pq.put((cost + weight, path + [neighbor]))
+    return None, None
+
+def a_star(graph, heuristics, start, goal):
+    frontier = PriorityQueue()
+    frontier.put((0, start))
+    came_from = {start: None}
+    cost_so_far = {start: 0}
+    while not frontier.empty():
+        _, current = frontier.get()
+        if current == goal:
+            break
+        for neighbor, dist in graph[current].items():
+            new_cost = cost_so_far[current] + dist
+            if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
+                cost_so_far[neighbor] = new_cost
+                priority = new_cost + heuristics.get(neighbor, 0)
+                frontier.put((priority, neighbor))
+                came_from[neighbor] = current
+    if goal not in came_from:
+        return None, None
+    path = []
+    node = goal
+    while node:
+        path.append(node)
+        node = came_from[node]
+    path.reverse()
+    return path, cost_so_far[goal]
+
+# ---------- Staff Info ----------
+def get_staff_info(location):
+    result = []
+    for unit, loc in contact_locations.items():
+        if loc == location:
+            dept = next((d for d in contacts if unit in contacts[d]), None)
+            if dept:
+                info = contacts[dept][unit]
+                if isinstance(info, list):
+                    for person in info:
+                        result.append(f"{unit} ({location}): {person['name']} ({person['phone']})")
+                else:
+                    result.append(f"{unit} ({location}): {info['name']} ({info['phone']})")
+    return result if result else [f"No staff info for {location}"]
+
+def get_location_timing(location):
+    timings = location_timings.get(location)
+    if timings:
+        if isinstance(timings, dict) and "start" in timings and "end" in timings:
+            return f"Open from {timings['start']} to {timings['end']}"
+        elif isinstance(timings, dict) and "breakfast" in timings:
+            return (
+                f"Breakfast: {timings['breakfast']['start']} - {timings['breakfast']['end']}\n"
+                f"Lunch: {timings['lunch']['start']} - {timings['lunch']['end']}\n"
+                f"Dinner: {timings['dinner']['start']} - {timings['dinner']['end']}"
+            )
+    return "No timing information available"
+
+
+
+
+# ---------- GUI Setup ----------
+root = tk.Tk()
+welcome_label = tk.Label(root, text="Welcome to Chanakya's Digital Path", font=("Arial", 16))
+welcome_label.pack(pady=10)
+root.title("Campus Assistant")
+
+notebook = ttk.Notebook(root)
+notebook.pack(fill='both', expand=True)
+
+# ---------- Tab 1: Pathfinding ----------
+frame1 = ttk.Frame(notebook)
+notebook.add(frame1, text="Pathfinding Assistant")
+
+tk.Label(frame1, text="From:").grid(row=0, column=0, padx=10, pady=5, sticky="e")
+start_choice = ttk.Combobox(frame1, values=list(distances.keys()))
+start_choice.grid(row=0, column=1, padx=10, pady=5)
+
+tk.Label(frame1, text="To:").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+end_choice = ttk.Combobox(frame1, values=list(distances.keys()))
+end_choice.grid(row=1, column=1, padx=10, pady=5)
+
+tk.Label(frame1, text="Choose Algorithm:").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+algo_choice = ttk.Combobox(frame1, values=["BFS", "DFS", "UCS", "A*"])
+algo_choice.grid(row=2, column=1, padx=10, pady=5)
+algo_choice.current(0)
+
+result_text = tk.Text(frame1, height=12, width=60)
+result_text.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
+
+last_path = []
+
+def run_algorithm():
+    global last_path
+    start = start_choice.get().strip()
+    end = end_choice.get().strip()
+    algo = algo_choice.get()
+    result_text.delete("1.0", tk.END)
+    last_path = []
+    if start not in distances or end not in distances:
+        result_text.insert(tk.END, "Invalid start or end location.\n")
+        return
+    if algo == "BFS":
+        path, cost = bfs(distances, start, end)
+    elif algo == "DFS":
+        path, cost = dfs(distances, start, end)
+    elif algo == "UCS":
+        path, cost = ucs(distances, start, end)
+    elif algo == "A*":
+        heuristics = {loc: 0 for loc in distances}
+        path, cost = a_star(distances, heuristics, start, end)
+    else:
+        path, cost = None, None
+    if path:
+        last_path = path
+        time_minutes = round(cost * 0.1, 1)
+        path_str = " → ".join(path)
+        result = (f"Path: {path_str}\n"
+                  f"Distance: {cost} meters\n"
+                  f"Estimated Time: {time_minutes} minutes")
+    else:
+        result = "No path found."
+    result_text.insert(tk.END, result)
+
+def show_path_details():
+    result_text.delete("1.0", tk.END)
+    if not last_path:
+        result_text.insert(tk.END, "No path available. Run an algorithm first.\n")
+        return
+    path_str = " → ".join(last_path)
+    result_text.insert(tk.END, f"Path: {path_str}\n")
+    for loc in last_path:
+        timing_info = get_location_timing(loc)
+        result_text.insert(tk.END, f"{loc}: {timing_info}\n")
+
+def show_staff_info_along_path():
+    result_text.delete("1.0", tk.END)
+    if not last_path:
+        result_text.insert(tk.END, "No path available. Run an algorithm first.\n")
+        return
+    staff_lines = []
+    for loc in last_path:
+        staff_info = get_staff_info(loc)
+        if staff_info and staff_info[0] != f"No staff info for {loc}":
+            staff_lines.extend(staff_info)
+    result_text.insert(tk.END, "Staff Info Along Path:\n" + "\n".join(staff_lines))
+
+run_btn = tk.Button(frame1, text="Find Path", command=run_algorithm)
+run_btn.grid(row=3, column=0, columnspan=2, pady=10)
+path_details_btn = tk.Button(frame1, text="Show Path Details", command=show_path_details)
+path_details_btn.grid(row=7, column=0, columnspan=2, pady=5)
+staff_info_btn = tk.Button(frame1, text="Show Staff Info Along Path", command=show_staff_info_along_path)
+staff_info_btn.grid(row=5, column=0, columnspan=2, pady=5)
+# ---------- Tab 2: Staff Contact Finder ----------
+frame2 = ttk.Frame(notebook)
+notebook.add(frame2, text="Staff Contact Finder")
+
+# Department Dropdown
+tk.Label(frame2, text="Choose Department:").grid(row=0, column=0, padx=10, pady=5, sticky="e")
+dept_choice = ttk.Combobox(frame2, values=list(contacts.keys()))
+dept_choice.grid(row=0, column=1, padx=10, pady=5)
+
+# Unit Dropdown (populated after department is selected)
+tk.Label(frame2, text="Choose Unit:").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+unit_menu = ttk.Combobox(frame2)
+unit_menu.grid(row=1, column=1, padx=10, pady=5)
+
+# Staff Info Display
+staff_text = tk.Text(frame2, height=12, width=60)
+staff_text.grid(row=3, column=0, columnspan=2, padx=10, pady=5)
+
+# Update units when department is selected
+def show_staff_details(department):
+    unit_menu['values'] = []
+    unit_menu.set('')
+    staff_text.delete("1.0", tk.END)
+
+    units = contacts.get(department)
+
+    # If it's a dict of units (like Admin or Hostel)
+    if isinstance(units, dict) and all(isinstance(v, (dict, list)) for v in units.values()):
+        unit_menu['values'] = list(units.keys())
+    else:
+        # It's a single unit (like Library, Medical Center, Sports & P.E)
+        unit_menu['values'] = [department]
+
+# Show staff info when unit is selected
+def show_unit_info():
+    dept = dept_choice.get().strip()
+    unit = unit_menu.get().strip()
+    staff_text.delete("1.0", tk.END)
+
+    if dept not in contacts:
+        staff_text.insert(tk.END, "Department not found.\n")
+        return
+
+    units = contacts[dept]
+    info = units.get(unit) if isinstance(units, dict) and unit in units else units
+    building = contact_locations.get(unit, "Unknown Location")
+
+    staff_text.insert(tk.END, f"{unit} ({building}):\n")
+    if isinstance(info, list):
+        for person in info:
+            staff_text.insert(tk.END, f"  - {person['name']} ({person['phone']})\n")
+    elif isinstance(info, dict):
+        staff_text.insert(tk.END, f"  - {info['name']} ({info['phone']})\n")
+    else:
+        staff_text.insert(tk.END, "No staff info available.")# Bind department selection to unit update
+dept_choice.bind("<<ComboboxSelected>>", lambda e: show_staff_details(dept_choice.get()))
+
+# Button to show staff info
+show_btn = tk.Button(frame2, text="Show Staff Info", command=show_unit_info)
+show_btn.grid(row=2, column=0, columnspan=2, pady=10)
